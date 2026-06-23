@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wanderly Recommendations</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="page-container">
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar-custom">
+
+        <div class="logo">
+            <img src="../images/ChatGPT Image Jun 22, 2026, 02_20_04 PM.png" alt="">
+            <h3>Wanderly</h3>
+        </div>
+
+        <div class="nav-links">
+            <a href="../index.html">Home</a>
+            <a href="#">Explore</a>
+            <a href="#">My Trips</a>
+            <a class="active-link" href="#">Recommendations</a>
+        </div>
+
+        <div class="nav-right">
+            <i class="fa-regular fa-bell"></i>
+        </div>
+
+    </nav>
+
+    <!-- PAGE -->
+
+    <section class="recommendations-section">
+
+        <div class="back-btn" onclick="window.history.back()">
+            <i class="fa-solid fa-arrow-left"></i>
+            Back
+        </div>
+
+        <h1>Top Recommendations for You</h1>
+
+        <p class="subtitle">
+            Personalized AI-generated travel destinations based on your preferences.
+        </p>
+
+        <div class="filter-row">
+
+            <button class="filter-btn active-filter">
+                All
+            </button>
+
+            <button class="filter-btn">
+                Mountains
+            </button>
+
+            <button class="filter-btn">
+                Beaches
+            </button>
+
+            <button class="filter-btn">
+                Nature
+            </button>
+
+            <button class="filter-btn">
+                Adventure
+            </button>
+
+            <button class="filter-btn">
+                Culture
+            </button>
+
+        </div>
+
+        <!-- Dynamic Cards -->
+
+        <div id="cards-container"></div>
+
+    </section>
+
+</div>
+
+<script>
+
+const trips = JSON.parse(
+    localStorage.getItem("wanderlyTrips")
+);
+
+const container = document.getElementById("cards-container");
+
+async function getImage(imageQuery){
+
+    try{
+
+        const response = await fetch(
+            `http://localhost:3000/image?q=${encodeURIComponent(imageQuery)}`
+        );
+
+        const data = await response.json();
+
+        return data.image;
+
+    }catch(err){
+
+        console.error(err);
+
+        return "https://images.pexels.com/photos/672358/pexels-photo-672358.jpeg";
+    }
+}
+
+async function renderTrips(){
+
+    if(!trips || trips.length === 0){
+
+        container.innerHTML = `
+            <div class="alert alert-warning">
+                No recommendations found.
+            </div>
+        `;
+
+        return;
+    }
+
+    let html = "";
+
+    for(let i = 0; i < trips.length; i++){
+
+        const trip = trips[i];
+
+        const imageUrl = await getImage(
+            trip.imageQuery || trip.destination
+        );
+
+        const tags = trip.activities
+            .map(activity => `<span>${activity}</span>`)
+            .join("");
+
+        html += `
+
+        <div class="destination-card">
+
+            <div class="rank-badge">
+                ${i + 1}
+            </div>
+
+            <img
+                src="${imageUrl}"
+                alt="${trip.destination}"
+            >
+
+            <div class="destination-info">
+
+                <div class="card-header">
+
+                    <h3>${trip.destination}</h3>
+
+                    <i class="fa-regular fa-heart heart"></i>
+
+                </div>
+
+                <div class="tags">
+                    ${tags}
+                </div>
+
+                <p>
+                    ${trip.descriptionLong}
+                </p>
+
+                <div class="bottom-info">
+
+                    <div>
+                        <h6>${trip.duration}</h6>
+                        <small>Duration</small>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div>
+                        <h6>₹${Number(trip.cost).toLocaleString("en-IN")}</h6>
+                        <small>Est. Cost</small>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div>
+                        <h6>${trip.bestSeason}</h6>
+                        <small>Best Season</small>
+                    </div>
+
+                    <button class="view-btn">
+                        View Details
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        `;
+    }
+
+    container.innerHTML = html;
+}
+
+renderTrips();
+
+</script>
+
+</body>
+</html>
